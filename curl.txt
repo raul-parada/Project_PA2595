@@ -1,0 +1,14 @@
+curl -X 'POST' \
+  'http://127.0.0.1:8004/predict/' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "preg": 6,
+  "plas": 148,
+  "pres": 72,
+  "skin": 35,
+  "insu": 0,
+  "mass": 33.6,
+  "pedi": 0.627,
+  "age": 50
+}'
