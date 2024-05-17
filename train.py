@@ -1,5 +1,6 @@
 import mlflow
 from mlflow.models import infer_signature
+from pydantic import BaseModel
 import pandas as pd
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
@@ -7,11 +8,14 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from fastapi import FastAPI, HTTPException
 import numpy as np
+from sklearn.datasets import load_iris
 
 app = FastAPI()
 
 # Load the Iris dataset
-X, y = datasets.load_iris(return_X_y=True)
+iris = load_iris()
+X = iris.data
+y = iris.target
 
 # Split the data into training and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -63,22 +67,20 @@ with mlflow.start_run() as run:
         registered_model_name="tracking-quickstart"
     )
 
-# Define a route for model inference
-@app.post("/predict")
-def predict(features: dict):
-    try:
-        feature_values = features.get("features")
-        if feature_values is None:
-            raise HTTPException(status_code=422, detail="Missing 'features' field in request body")
-        # Convert features to numpy array
-        features_array = np.array(feature_values).reshape(1, -1)
-        # Make prediction using the loaded model
-        prediction = rf.predict(features_array)
-        return {"prediction": int(prediction[0])}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+# Define a request model
+class IrisRequest(BaseModel):
+    sepal_length: float
+    sepal_width: float
+    petal_length: float
+    petal_width: float
 
+# Define the /predict endpoint
+@app.post("/predict")
+def predict(iris_request: IrisRequest):
+    data = np.array([[iris_request.sepal_length, iris_request.sepal_width, iris_request.petal_length, iris_request.petal_width]])
+    prediction = rf.predict(data)
+    species = iris.target_names[prediction[0]]
+    return {"species": species}
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8004)
-
