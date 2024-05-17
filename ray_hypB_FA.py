@@ -92,19 +92,6 @@ async def predict(data: InputData):
     prediction = best_model.predict(input_data)
     return {"prediction": prediction.tolist()}
 
-# Define a route for model inference
-@app.post("/inference/")
-def inference(data: dict):
-    try:
-        feature_values = data.get("features")
-        if feature_values is None:
-            raise HTTPException(status_code=422, detail="Missing 'features' field in request body")
-        features_array = np.array(feature_values).reshape(1, -1)
-        prediction = best_model.predict(features_array)
-        return {"prediction": int(prediction[0])}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8004)
 
